@@ -86,10 +86,10 @@ function logout() {
 
 // ===== SIGNUP =====
 function signup() {
-    const name     = document.getElementById("name").value.trim();
-    const email    = document.getElementById("email").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
-    const role     = document.getElementById("role").value;
+    const role = document.getElementById("role").value;
 
     if (!name || !email || !password || !role) {
         showMsg('signup-msg', 'Please fill in all fields.', true);
@@ -98,24 +98,24 @@ function signup() {
 
     fetch(BASE_URL + "/signup", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, role })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.message === "User registered successfully") {
-            showMsg('signup-msg', '✓ Account created! You can now sign in.');
-            setTimeout(() => switchTab('login'), 1800);
-        } else {
-            showMsg('signup-msg', data.message || data.error, true);
-        }
-    })
-    .catch(() => showMsg('signup-msg', 'Connection error.', true));
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "User registered successfully") {
+                showMsg('signup-msg', '✓ Account created! You can now sign in.');
+                setTimeout(() => switchTab('login'), 1800);
+            } else {
+                showMsg('signup-msg', data.message || data.error, true);
+            }
+        })
+        .catch(() => showMsg('signup-msg', 'Connection error.', true));
 }
 
 // ===== LOGIN =====
 function login() {
-    const email    = document.getElementById("login_email").value.trim();
+    const email = document.getElementById("login_email").value.trim();
     const password = document.getElementById("login_password").value;
 
     if (!email || !password) {
@@ -125,60 +125,60 @@ function login() {
 
     fetch(BASE_URL + "/login", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.message === "Login successful") {
-            currentUser = {
-                id: data.user_id,
-                name: data.name,
-                email: data.email,
-                role: data.role
-            };
-            showMsg('login-msg', '✓ Signed in!');
-            setTimeout(() => {
-                goTo('page-workspace');
-                applyRoleUI(currentUser.role);
-            }, 800);
-        } else {
-            showMsg('login-msg', data.message, true);
-        }
-    })
-    .catch(() => showMsg('login-msg', 'Connection error.', true));
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "Login successful") {
+                currentUser = {
+                    id: data.user_id,
+                    name: data.name,
+                    email: data.email,
+                    role: data.role
+                };
+                showMsg('login-msg', '✓ Signed in!');
+                setTimeout(() => {
+                    goTo('page-workspace');
+                    applyRoleUI(currentUser.role);
+                }, 800);
+            } else {
+                showMsg('login-msg', data.message, true);
+            }
+        })
+        .catch(() => showMsg('login-msg', 'Connection error.', true));
 }
 
 // ===== LOAD PROJECTS (for task project dropdown) =====
 function loadProjects() {
     fetch(BASE_URL + "/projects")
-    .then(res => res.json())
-    .then(data => {
-        const sel = document.getElementById('project_id_select');
-        sel.innerHTML = '<option value="">Select project</option>';
-        (data.projects || []).forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `#${p.id} — ${p.name}`;
-            sel.appendChild(opt);
-        });
-    })
-    .catch(() => {});
+        .then(res => res.json())
+        .then(data => {
+            const sel = document.getElementById('project_id_select');
+            sel.innerHTML = '<option value="">Select project</option>';
+            (data.projects || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `#${p.id} — ${p.name}`;
+                sel.appendChild(opt);
+            });
+        })
+        .catch(() => { });
 }
 
 // ===== LOAD PROJECT CARDS =====
 function loadProjectCards() {
     fetch(BASE_URL + "/projects")
-    .then(res => res.json())
-    .then(data => {
-        const container = document.getElementById('project-cards');
-        if (!container) return;
-        const projects = data.projects || [];
-        if (!projects.length) {
-            container.innerHTML = '<div class="loading-state">No projects yet. Create one above.</div>';
-            return;
-        }
-        container.innerHTML = projects.map(p => `
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('project-cards');
+            if (!container) return;
+            const projects = data.projects || [];
+            if (!projects.length) {
+                container.innerHTML = '<div class="loading-state">No projects yet. Create one above.</div>';
+                return;
+            }
+            container.innerHTML = projects.map(p => `
             <div class="task-card project-card">
                 <div class="task-top">
                     <span class="task-title">${p.name}</span>
@@ -189,25 +189,25 @@ function loadProjectCards() {
                 </div>
             </div>
         `).join('');
-    })
-    .catch(() => {});
+        })
+        .catch(() => { });
 }
 
 // ===== LOAD MEMBERS (for task assignment dropdown) =====
 function loadMembers() {
     fetch(BASE_URL + "/users")
-    .then(res => res.json())
-    .then(data => {
-        const sel = document.getElementById('assigned_to_select');
-        sel.innerHTML = '<option value="">Select member</option>';
-        (data.users || []).forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u.id;
-            opt.textContent = `${u.name} (${u.role})`;
-            sel.appendChild(opt);
-        });
-    })
-    .catch(() => {});
+        .then(res => res.json())
+        .then(data => {
+            const sel = document.getElementById('assigned_to_select');
+            sel.innerHTML = '<option value="">Select member</option>';
+            (data.users || []).forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = `${u.name} (${u.role})`;
+                sel.appendChild(opt);
+            });
+        })
+        .catch(() => { });
 }
 
 // ===== CREATE PROJECT =====
@@ -221,27 +221,27 @@ function createProject() {
 
     fetch(BASE_URL + "/create_project", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, created_by: currentUser ? currentUser.id : 1 })
     })
-    .then(res => res.json())
-    .then(data => {
-        showMsg('project-msg', '✓ ' + (data.message || 'Project created!') + (data.project_id ? ' (ID: ' + data.project_id + ')' : ''));
-        document.getElementById("project_name").value = '';
-        loadProjectCards();
-        loadProjects();
-    })
-    .catch(() => showMsg('project-msg', 'Connection error.', true));
+        .then(res => res.json())
+        .then(data => {
+            showMsg('project-msg', '✓ ' + (data.message || 'Project created!') + (data.project_id ? ' (ID: ' + data.project_id + ')' : ''));
+            document.getElementById("project_name").value = '';
+            loadProjectCards();
+            loadProjects();
+        })
+        .catch(() => showMsg('project-msg', 'Connection error.', true));
 }
 
 // ===== CREATE TASK =====
 function createTask() {
-    const title       = document.getElementById("title").value.trim();
+    const title = document.getElementById("title").value.trim();
     const description = document.getElementById("description").value.trim();
     const assigned_to = document.getElementById("assigned_to_select").value;
-    const project_id  = document.getElementById("project_id_select").value;
-    const status      = document.getElementById("status").value;
-    const due_date    = document.getElementById("due_date").value;
+    const project_id = document.getElementById("project_id_select").value;
+    const status = document.getElementById("status").value;
+    const due_date = document.getElementById("due_date").value;
 
     if (!title || !assigned_to || !project_id || !due_date) {
         showMsg('task-msg', 'Please fill in all required fields.', true);
@@ -250,19 +250,19 @@ function createTask() {
 
     fetch(BASE_URL + "/create_task", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, assigned_to, project_id, status, due_date })
     })
-    .then(res => res.json())
-    .then(data => {
-        showMsg('task-msg', '✓ ' + (data.message || 'Task created!'));
-        document.getElementById("title").value = '';
-        document.getElementById("description").value = '';
-        document.getElementById("assigned_to_select").value = '';
-        document.getElementById("project_id_select").value = '';
-        document.getElementById("due_date").value = '';
-    })
-    .catch(() => showMsg('task-msg', 'Connection error.', true));
+        .then(res => res.json())
+        .then(data => {
+            showMsg('task-msg', '✓ ' + (data.message || 'Task created!'));
+            document.getElementById("title").value = '';
+            document.getElementById("description").value = '';
+            document.getElementById("assigned_to_select").value = '';
+            document.getElementById("project_id_select").value = '';
+            document.getElementById("due_date").value = '';
+        })
+        .catch(() => showMsg('task-msg', 'Connection error.', true));
 }
 
 // ===== TASK CARD RENDERER =====
@@ -299,16 +299,16 @@ function loadMyTasks() {
     if (!userId) { container.innerHTML = '<div class="loading-state">Not logged in.</div>'; return; }
 
     fetch(BASE_URL + `/tasks?user_id=${userId}`)
-    .then(res => res.json())
-    .then(data => {
-        const tasks = data.tasks || [];
-        if (!tasks.length) {
-            container.innerHTML = '<div class="loading-state">No tasks assigned to you yet.</div>';
-            return;
-        }
-        container.innerHTML = tasks.map(renderTaskCard).join('');
-    })
-    .catch(() => { container.innerHTML = '<div class="loading-state">Failed to load tasks.</div>'; });
+        .then(res => res.json())
+        .then(data => {
+            const tasks = data.tasks || [];
+            if (!tasks.length) {
+                container.innerHTML = '<div class="loading-state">No tasks assigned to you yet.</div>';
+                return;
+            }
+            container.innerHTML = tasks.map(renderTaskCard).join('');
+        })
+        .catch(() => { container.innerHTML = '<div class="loading-state">Failed to load tasks.</div>'; });
 }
 
 // ===== LOAD ALL TASKS (Admin) =====
@@ -317,36 +317,36 @@ function loadAllTasks() {
     container.innerHTML = '<div class="loading-state">Loading…</div>';
 
     fetch(BASE_URL + "/tasks")
-    .then(res => res.json())
-    .then(data => {
-        const tasks = data.tasks || [];
-        if (!tasks.length) {
-            container.innerHTML = '<div class="loading-state">No tasks yet.</div>';
-            return;
-        }
-        container.innerHTML = tasks.map(renderTaskCard).join('');
-    })
-    .catch(() => { container.innerHTML = '<div class="loading-state">Failed to load tasks.</div>'; });
+        .then(res => res.json())
+        .then(data => {
+            const tasks = data.tasks || [];
+            if (!tasks.length) {
+                container.innerHTML = '<div class="loading-state">No tasks yet.</div>';
+                return;
+            }
+            container.innerHTML = tasks.map(renderTaskCard).join('');
+        })
+        .catch(() => { container.innerHTML = '<div class="loading-state">Failed to load tasks.</div>'; });
 }
 
 // ===== DASHBOARD =====
 function loadDashboard() {
-    ['stat-total','stat-completed','stat-pending','stat-overdue'].forEach(id => {
+    ['stat-total', 'stat-completed', 'stat-pending', 'stat-overdue'].forEach(id => {
         document.getElementById(id).textContent = '…';
     });
 
     fetch(BASE_URL + "/dashboard")
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById('stat-total').textContent     = data.total_tasks;
-        document.getElementById('stat-completed').textContent = data.completed_tasks;
-        document.getElementById('stat-pending').textContent   = data.pending_tasks;
-        document.getElementById('stat-overdue').textContent   = data.overdue_tasks;
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('stat-total').textContent = data.total_tasks;
+            document.getElementById('stat-completed').textContent = data.completed_tasks;
+            document.getElementById('stat-pending').textContent = data.pending_tasks;
+            document.getElementById('stat-overdue').textContent = data.overdue_tasks;
 
-        // Team breakdown
-        if (data.user_breakdown) {
-            const breakdown = document.getElementById('team-breakdown');
-            breakdown.innerHTML = data.user_breakdown.map(u => `
+            // Team breakdown
+            if (data.user_breakdown) {
+                const breakdown = document.getElementById('team-breakdown');
+                breakdown.innerHTML = data.user_breakdown.map(u => `
                 <div class="task-card">
                     <div class="task-top">
                         <span class="task-title">👤 ${u.name}</span>
@@ -358,11 +358,11 @@ function loadDashboard() {
                     </div>
                 </div>
             `).join('');
-        }
-    })
-    .catch(() => {
-        ['stat-total','stat-completed','stat-pending','stat-overdue'].forEach(id => {
-            document.getElementById(id).textContent = '—';
+            }
+        })
+        .catch(() => {
+            ['stat-total', 'stat-completed', 'stat-pending', 'stat-overdue'].forEach(id => {
+                document.getElementById(id).textContent = '—';
+            });
         });
-    });
 }
