@@ -1,164 +1,211 @@
 import os
 from flask import Flask, request, jsonify, render_template
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
+from datetime import date
 
 app = Flask(__name__)
 
-# MySQL Config
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'prasad@1234'
-app.config['MYSQL_DB'] = 'task_manager'
+# ===== DATABASE CONFIG (SQLite) =====
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///task_manager.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-mysql = MySQL(app)
+db = SQLAlchemy(app)
 
-# Home Route
+# ===== MODELS =====
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(100))
+    role = db.Column(db.String(20))
+
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
+    description = db.Column(db.Text)
+    assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'))
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    status = db.Column(db.String(20))
+    due_date = db.Column(db.Date)
+
+# ===== CREATE DATABASE =====
+with app.app_context():
+    db.create_all()
+
+# ===== HOME =====
 @app.route('/')
 def home():
-    return "Server Running"
+    return render_template('index.html')
 
-# Signup API
+# ===== SIGNUP =====
 @app.route('/signup', methods=['POST'])
 def signup():
-    try:
-        data = request.json
-        name = data['name']
-        email = data['email']
-        password = data['password']
-        role = data['role']
+    data = request.json
 
-        cur = mysql.connection.cursor()
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({"message": "Email already registered"})
 
-        cur.execute("SELECT * FROM users WHERE email=%s", (email,))
-        existing_user = cur.fetchone()
+    user = User(
+        name=data['name'],
+        email=data['email'],
+        password=data['password'],
+        role=data['role']
+    )
+    db.session.add(user)
+    db.session.commit()
 
-        if existing_user:
-            return {"message": "Email already registered"}
+    return jsonify({"message": "User registered successfully"})
 
-        cur.execute("INSERT INTO users (name, email, password, role) VALUES (%s, %s, %s, %s)",
-                    (name, email, password, role))
-        mysql.connection.commit()
-        cur.close()
-
-        return {"message": "User registered successfully"}
-
-    except Exception as e:
-        return {"error": str(e)}
-
-# Login API
+# ===== LOGIN =====
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    email = data['email']
-    password = data['password']
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
-    user = cur.fetchone()
-    cur.close()
+    user = User.query.filter_by(
+        email=data['email'],
+        password=data['password']
+    ).first()
 
     if user:
-        return jsonify({"message": "Login successful"})
+        return jsonify({
+            "message": "Login successful",
+            "user_id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role
+        })
     else:
         return jsonify({"message": "Invalid credentials"})
 
-# ✅ CREATE PROJECT 
+# ===== GET USERS =====
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify({
+        "users": [{"id": u.id, "name": u.name, "role": u.role} for u in users]
+    })
+
+# ===== CREATE PROJECT =====
 @app.route('/create_project', methods=['POST'])
 def create_project():
     data = request.json
-    name = data['name']
-    created_by = data['created_by']
 
-    cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO projects (name, created_by) VALUES (%s, %s)",
-                (name, created_by))
-    mysql.connection.commit()
-    cur.close()
+    project = Project(
+        name=data['name'],
+        created_by=data['created_by']
+    )
+    db.session.add(project)
+    db.session.commit()
 
-    return {"message": "Project created"}
+    return jsonify({"message": "Project created", "project_id": project.id})
 
-# CREATE TASK
+# ===== GET PROJECTS =====
+@app.route('/projects', methods=['GET'])
+def get_projects():
+    projects = Project.query.all()
+
+    result = []
+    for p in projects:
+        user = User.query.get(p.created_by)
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "created_by": p.created_by,
+            "creator_name": user.name if user else ""
+        })
+
+    return jsonify({"projects": result})
+
+# ===== CREATE TASK =====
 @app.route('/create_task', methods=['POST'])
 def create_task():
     data = request.json
-    title = data['title']
-    description = data['description']
-    assigned_to = data['assigned_to']
-    project_id = data['project_id']
-    status = data['status']
-    due_date = data['due_date']
 
-    cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO tasks 
-        (title, description, assigned_to, project_id, status, due_date)
-        VALUES (%s, %s, %s, %s, %s, %s)""",
-        (title, description, assigned_to, project_id, status, due_date))
-    
-    mysql.connection.commit()
-    cur.close()
+    task = Task(
+        title=data['title'],
+        description=data.get('description', ''),
+        assigned_to=data['assigned_to'],
+        project_id=data.get('project_id', 1),
+        status=data['status'],
+        due_date=date.fromisoformat(data['due_date'])
+    )
 
-    return {"message": "Task created"}
+    db.session.add(task)
+    db.session.commit()
 
-# GET TASKS
+    return jsonify({"message": "Task created"})
+
+# ===== GET TASKS =====
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM tasks")
-    tasks = cur.fetchall()
-    cur.close()
+    user_id = request.args.get('user_id')
+    
+    if user_id:
+        tasks = Task.query.filter_by(assigned_to=user_id).all()
+    else:
+        tasks = Task.query.all()
 
-    return {"tasks": tasks}
+    result = []
+    for t in tasks:
+        user = User.query.get(t.assigned_to)
+        project = Project.query.get(t.project_id)
 
-# UPDATE TASK
+        result.append({
+            "id": t.id,
+            "title": t.title,
+            "description": t.description,
+            "assigned_to": t.assigned_to,
+            "project_id": t.project_id,
+            "status": t.status,
+            "due_date": str(t.due_date) if t.due_date else None,
+            "assigned_name": user.name if user else "",
+            "project_name": project.name if project else ""
+        })
+
+    return jsonify({"tasks": result})
+
+# ===== UPDATE TASK =====
 @app.route('/update_task/<int:id>', methods=['PUT'])
 def update_task(id):
     data = request.json
-    status = data['status']
+    task = Task.query.get(id)
 
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE tasks SET status=%s WHERE id=%s", (status, id))
-    mysql.connection.commit()
-    cur.close()
+    if task:
+        task.status = data['status']
+        db.session.commit()
+        return jsonify({"message": "Task updated"})
+    else:
+        return jsonify({"message": "Task not found"})
 
-    return {"message": "Task updated"}
-#create a dashboard api
+# ===== DASHBOARD =====
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    cur = mysql.connection.cursor()
+    total = Task.query.count()
+    completed = Task.query.filter_by(status='Completed').count()
+    pending = Task.query.filter_by(status='Pending').count()
 
-    # Total tasks
-    cur.execute("SELECT COUNT(*) FROM tasks")
-    total = cur.fetchone()[0]
+    overdue = Task.query.filter(
+        Task.due_date < date.today(),
+        Task.status != 'Completed'
+    ).count()
 
-    # Completed tasks
-    cur.execute("SELECT COUNT(*) FROM tasks WHERE status='Completed'")
-    completed = cur.fetchone()[0]
-
-    # Pending tasks
-    cur.execute("SELECT COUNT(*) FROM tasks WHERE status='Pending'")
-    pending = cur.fetchone()[0]
-
-    # Overdue tasks
-    cur.execute("""
-        SELECT COUNT(*) FROM tasks 
-        WHERE due_date < CURDATE() AND status != 'Completed'
-    """)
-    overdue = cur.fetchone()[0]
-
-    cur.close()
-
-    return {
+    return jsonify({
         "total_tasks": total,
         "completed_tasks": completed,
         "pending_tasks": pending,
         "overdue_tasks": overdue
-    }
+    })
 
-
-#Connect Flask to Frontend
+# ===== FRONTEND ROUTE =====
 @app.route('/ui')
 def ui():
     return render_template('index.html')
 
+# ===== RUN =====
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

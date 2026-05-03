@@ -1,48 +1,226 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Team Task Manager</title>
+    <title>TaskFlow</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
-<h1>Team Task Manager</h1>
+    <!-- ===== PAGE 1: AUTH ===== -->
+    <div id="page-auth" class="page active">
+        <div class="auth-bg">
+            <div class="blob blob1"></div>
+            <div class="blob blob2"></div>
+        </div>
+        <div class="auth-wrap">
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+                <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+                <div class="tab-slider" id="tab-slider"></div>
+            </div>
 
-<!-- Signup -->
-<h2>Signup</h2>
-<input id="name" placeholder="Name">
-<input id="email" placeholder="Email">
-<input id="password" placeholder="Password">
-<input id="role" placeholder="Role (admin/member)">
-<button onclick="signup()">Signup</button>
+            <!-- Login Form -->
+            <div class="auth-form" id="form-login">
+                <div class="field">
+                    <label>Email</label>
+                    <input id="login_email" type="email" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input id="login_password" type="password" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" onclick="login()">Sign In →</button>
+                <div id="login-msg" class="msg"></div>
+            </div>
 
-<!-- Login -->
-<h2>Login</h2>
-<input id="login_email" placeholder="Email">
-<input id="login_password" placeholder="Password">
-<button onclick="login()">Login</button>
+            <!-- Signup Form -->
+            <div class="auth-form hidden" id="form-signup">
+                <div class="field">
+                    <label>Full Name</label>
+                    <input id="name" type="text" placeholder="Jane Doe">
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input id="email" type="email" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input id="password" type="password" placeholder="••••••••">
+                </div>
+                <div class="field">
+                    <label>Role</label>
+                    <select id="role">
+                        <option value="">Select role</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Member">Member</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="signup()">Create Account →</button>
+                <div id="signup-msg" class="msg"></div>
+            </div>
+        </div>
+    </div>
 
-<!-- Create Project -->
-<h2>Create Project</h2>
-<input id="project_name" placeholder="Project Name">
-<input id="created_by" placeholder="User ID">
-<button onclick="createProject()">Create</button>
+    <!-- ===== PAGE 2: WORKSPACE ===== -->
+    <div id="page-workspace" class="page">
+        <nav class="topnav">
+            <div class="nav-links">
+                <!-- Admin-only nav buttons -->
+                <button class="nav-btn active admin-only" onclick="showSection('projects')">Projects</button>
+                <button class="nav-btn admin-only" onclick="showSection('tasks')">Create Task</button>
+                <button class="nav-btn" onclick="showSection('my-tasks')">My Tasks</button>
+                <button class="nav-btn admin-only" onclick="showSection('all-tasks')">All Tasks</button>
+                <button class="nav-btn dash-link admin-only" onclick="goTo('page-dashboard')">Dashboard →</button>
+                <button class="nav-btn logout-btn" onclick="logout()">Sign Out</button>
+            </div>
+        </nav>
 
-<!-- Create Task -->
-<h2>Create Task</h2>
-<input id="title" placeholder="Title">
-<input id="description" placeholder="Description">
-<input id="assigned_to" placeholder="User ID">
-<input id="project_id" placeholder="Project ID">
-<input id="status" placeholder="Status">
-<input id="due_date" placeholder="YYYY-MM-DD">
-<button onclick="createTask()">Create Task</button>
+        <div class="workspace-body">
 
-<!-- Dashboard -->
-<h2>Dashboard</h2>
-<button onclick="getDashboard()">Load Dashboard</button>
-<p id="dashboard"></p>
+            <!-- CREATE PROJECT (Admin only) -->
+            <section id="section-projects" class="ws-section active admin-only">
+                <div class="section-header">
+                    <h2>Projects</h2>
+                    <p>Organise your work into projects</p>
+                </div>
+                <div class="form-card">
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Project Name</label>
+                            <input id="project_name" type="text" placeholder="e.g. Website Redesign">
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="createProject()">Create Project</button>
+                    <div id="project-msg" class="msg"></div>
+                </div>
 
-<script src="/static/script.js"></script>
+                <div class="section-header" style="margin-top:32px;">
+                    <h2>All Projects</h2>
+                    <p>Your existing projects and their IDs</p>
+                </div>
+                <div id="project-cards" class="task-list">
+                    <div class="loading-state">Loading projects…</div>
+                </div>
+            </section>
+
+            <!-- CREATE TASK (Admin only) -->
+            <section id="section-tasks" class="ws-section admin-only">
+                <div class="section-header">
+                    <h2>Create Task</h2>
+                    <p>Assign tasks to your team</p>
+                </div>
+                <div class="form-card">
+                    <div class="field">
+                        <label>Task Title</label>
+                        <input id="title" type="text" placeholder="e.g. Design homepage">
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Project</label>
+                            <select id="project_id_select">
+                                <option value="">Select project</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Assign To</label>
+                            <select id="assigned_to_select">
+                                <option value="">Select member</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Description</label>
+                        <textarea id="description" placeholder="What needs to be done?"></textarea>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Status</label>
+                            <select id="status">
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Due Date</label>
+                            <input id="due_date" type="date">
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="createTask()">Create Task</button>
+                    <div id="task-msg" class="msg"></div>
+                </div>
+            </section>
+
+            <!-- MY TASKS (Member + Admin can see their own) -->
+            <section id="section-my-tasks" class="ws-section">
+                <div class="section-header">
+                    <h2>My Tasks</h2>
+                    <p>Tasks assigned to you</p>
+                </div>
+                <div id="my-tasks-list" class="task-list">
+                    <div class="loading-state">Loading your tasks…</div>
+                </div>
+            </section>
+
+            <!-- ALL TASKS (Admin only) -->
+            <section id="section-all-tasks" class="ws-section admin-only">
+                <div class="section-header">
+                    <h2>All Tasks</h2>
+                    <p>Every task across your team</p>
+                </div>
+                <div id="all-tasks-list" class="task-list">
+                    <div class="loading-state">Loading tasks…</div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- ===== PAGE 3: DASHBOARD (Admin only) ===== -->
+    <div id="page-dashboard" class="page">
+        <nav class="topnav">
+            <div class="nav-links">
+                <button class="nav-btn" onclick="goTo('page-workspace')">← Workspace</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-body">
+            <div class="section-header">
+                <h2>Dashboard</h2>
+                <p>Your team's progress at a glance</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Tasks</div>
+                    <div class="stat-num" id="stat-total">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-num" id="stat-completed">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-num" id="stat-pending">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Overdue</div>
+                    <div class="stat-num" id="stat-overdue">—</div>
+                </div>
+            </div>
+
+            <!-- Per-user breakdown (Admin) -->
+            <div class="section-header" style="margin-top:36px;">
+                <h2>Team Breakdown</h2>
+                <p>Tasks assigned per member</p>
+            </div>
+            <div id="team-breakdown" class="task-list"></div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
 </body>
+
 </html>
