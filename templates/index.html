@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Team Task Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h1>Team Task Manager</h1>
+
+<!-- Signup -->
+<h2>Signup</h2>
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Password">
+<input id="role" placeholder="Role (admin/member)">
+<button onclick="signup()">Signup</button>
+
+<!-- Login -->
+<h2>Login</h2>
+<input id="login_email" placeholder="Email">
+<input id="login_password" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<!-- Create Project -->
+<h2>Create Project</h2>
+<input id="project_name" placeholder="Project Name">
+<input id="created_by" placeholder="User ID">
+<button onclick="createProject()">Create</button>
+
+<!-- Create Task -->
+<h2>Create Task</h2>
+<input id="title" placeholder="Title">
+<input id="description" placeholder="Description">
+<input id="assigned_to" placeholder="User ID">
+<input id="project_id" placeholder="Project ID">
+<input id="status" placeholder="Status">
+<input id="due_date" placeholder="YYYY-MM-DD">
+<button onclick="createTask()">Create Task</button>
+
+<!-- Dashboard -->
+<h2>Dashboard</h2>
+<button onclick="getDashboard()">Load Dashboard</button>
+<p id="dashboard"></p>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
